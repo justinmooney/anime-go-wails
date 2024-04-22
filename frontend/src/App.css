@@ -1,0 +1,53 @@
+#app {
+  height: 100vh;
+  text-align: center;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+}
+
+.button {
+  width: 300px;
+  min-height: 30px;
+  padding: 10px;
+  background-color: rgb(32, 32, 32);
+  border-width: 0px;
+  color: white;
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.scroller {
+  width: 300px;
+  height: 738px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.display {
+  width: 900px;
+  height: 768px;
+  overflow-y: clip;
+}
+
+.synopsis {
+  text-align: justify;
+  height: 150px;
+  overflow-y: scroll;
+  margin-top: 0px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.title {
+  text-align: center;
+  min-height: 40px;
+}
+
+.searchbox {
+  width: 95%;
+  padding: 3px;
+  margin-top: 3px;
+}
