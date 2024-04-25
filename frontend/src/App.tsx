@@ -14,7 +14,7 @@ type Anime = {
   CoverImage: string;
 };
 
-function Anime({ anime }: AnimeProps) {
+function MainDisplay({ anime }: AnimeProps) {
   if (anime === null) {
     return <div></div>;
   }
@@ -42,17 +42,21 @@ function App() {
   const [anime, setAnime] = useState<Anime | null>(null);
   const [animeList, setAnimeList] = useState(Array());
   const [loaded, setLoaded] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   function animeClicked(a: Anime) {
     setAnime(a);
   }
 
   function createButtons(list: Anime[]) {
-    return list.map((a, i) => {
-      console.log(i);
+    return list.map((a) => {
       return (
         <div>
-          <button className="button" onClick={() => animeClicked(a)}>
+          <button
+            id={a.Title}
+            className="list-item"
+            onClick={() => animeClicked(a)}
+          >
             {a.Title}
           </button>
         </div>
@@ -61,9 +65,28 @@ function App() {
   }
 
   function getAnimes(prefix: string) {
+    setSearchTerm(prefix);
     GetAnimes(prefix).then((x: Anime[]) => {
       setAnimeList(createButtons(x));
+      if (x.length == 0) {
+        return;
+      }
       setAnime(x[0]);
+    });
+  }
+
+  function getRandomAnime() {
+    setSearchTerm("");
+    GetAnimes("").then((a: Anime[]) => {
+      setAnimeList(createButtons(a));
+      const randomIndex = Math.floor(Math.random() * a.length);
+      setAnime(a[randomIndex]);
+
+      const element = document.getElementById(a[randomIndex].Title);
+      if (element != null) {
+        element.scrollIntoView({ behavior: "smooth" });
+        element.focus();
+      }
     });
   }
 
@@ -81,16 +104,22 @@ function App() {
     <div id="App">
       <div className="row">
         <div>
-          <input
-            className="searchbox"
-            type="text"
-            placeholder="search..."
-            onChange={filterList}
-          />
+          <div className="row">
+            <input
+              className="searchbox"
+              type="text"
+              placeholder="search..."
+              value={searchTerm}
+              onChange={filterList}
+            />
+            <button className="random-button" onClick={getRandomAnime}>
+              random
+            </button>
+          </div>
           <div className="scroller">{animeList}</div>
         </div>
         <div className="display">
-          <Anime anime={anime} />
+          <MainDisplay anime={anime} />
         </div>
       </div>
     </div>
