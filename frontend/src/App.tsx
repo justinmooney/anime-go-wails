@@ -1,6 +1,7 @@
 import { useState, ChangeEvent } from "react";
 import "./App.css";
-import { GetAnimes } from "../wailsjs/go/main/App";
+import { GetAnimes, DoEvents } from "../wailsjs/go/main/App";
+import { EventsOn, EventsOff } from "../wailsjs/runtime";
 
 type AnimeProps = {
   anime: Anime | null;
@@ -34,6 +35,42 @@ function MainDisplay({ anime }: AnimeProps) {
       <hr />
       <p className="synopsis">{anime.Synopsis}</p>
       <img src={anime.CoverImage} height={anime.CoverImage ? "500" : "0"} />
+    </div>
+  );
+}
+
+function LoaderPage() {
+  const [progress, setProgress] = useState(0.0);
+
+  function start() {
+    setProgress(0.0);
+    EventsOn("MyEvent", (x) => {
+      setProgress(x);
+    });
+    DoEvents();
+  }
+
+  function cancel() {
+    EventsOff("MyEvent");
+    setProgress(0.0);
+  }
+
+  function button() {
+    if (progress == 0) {
+      return <button onClick={start}>get em</button>;
+    } else {
+      return <button onClick={cancel}>cancel</button>;
+    }
+  }
+
+  return (
+    <div>
+      <h1>get dem animes</h1>
+      {button()}
+      <div>
+        <progress value={progress / 100} />
+        <div>{Math.floor(progress)}/100</div>
+      </div>
     </div>
   );
 }
@@ -98,6 +135,10 @@ function App() {
   if (!loaded) {
     getAnimes("");
     setLoaded(true);
+  }
+
+  if (true) {
+    return LoaderPage();
   }
 
   return (

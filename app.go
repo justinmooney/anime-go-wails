@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"strings"
+	"time"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 var animes *[]AnimeItem
@@ -39,4 +42,12 @@ func (a *App) GetAnimes(prefix string) []AnimeItem {
 		}
 	}
 	return filtered
+}
+
+func (a *App) DoEvents() {
+	x := 0
+	for range time.Tick(1 * time.Second) {
+		runtime.EventsEmit(a.ctx, "MyEvent", x)
+		x += 5
+	}
 }
