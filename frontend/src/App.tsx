@@ -1,17 +1,11 @@
 import "./App.css";
+import { useState, ChangeEvent } from "react";
 import { GetAnimes, DoEvents } from "../wailsjs/go/main/App";
-import { EventsOn, EventsOff, LogInfo } from "../wailsjs/runtime";
+import { EventsOn, EventsOff } from "../wailsjs/runtime";
+import { main as models } from "../wailsjs/go/models";
 
 type AnimeProps = {
-  anime: Anime | null;
-};
-
-type Anime = {
-  Title: string;
-  StartDate: string;
-  EndDate: string;
-  Synopsis: string;
-  CoverImage: string;
+  anime: models.AnimeItem | null;
 };
 
 function MainDisplay({ anime }: AnimeProps) {
@@ -77,7 +71,7 @@ function LoaderPage(
 }
 
 function App() {
-  const [anime, setAnime] = useState<Anime | null>(null);
+  const [anime, setAnime] = useState<models.AnimeItem | null>(null);
   const [animeList, setAnimeList] = useState(Array());
   const [loaded, setLoaded] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -98,11 +92,11 @@ function App() {
     setProgress([0.0, 0.0]);
   }
 
-  function animeClicked(a: Anime) {
+  function animeClicked(a: models.AnimeItem) {
     setAnime(a);
   }
 
-  function createButtons(list: Anime[]) {
+  function createButtons(list: models.AnimeItem[]) {
     return list.map((a) => {
       return (
         <div>
@@ -118,33 +112,36 @@ function App() {
     });
   }
 
-  function selectAnime(a: Anime) {
+  function selectAnime(a: models.AnimeItem, select: boolean) {
     setAnime(a);
+    if (!select) {
+      return;
+    }
     const element = document.getElementById(a.Title);
     if (element != null) {
       element.scrollIntoView({ behavior: "smooth" });
       // TODO: highlight the button without focusing it
-      // element.focus();
+      element.focus();
     }
   }
 
   function getAnimes(prefix: string) {
     setSearchTerm(prefix);
-    GetAnimes(prefix).then((x: Anime[]) => {
+    GetAnimes(prefix).then((x: models.AnimeItem[]) => {
       setAnimeList(createButtons(x));
       if (x.length == 0) {
         return;
       }
-      selectAnime(x[0]);
+      selectAnime(x[0], false);
     });
   }
 
   function getRandomAnime() {
     setSearchTerm("");
-    GetAnimes("").then((a: Anime[]) => {
+    GetAnimes("").then((a: models.AnimeItem[]) => {
       setAnimeList(createButtons(a));
       const randomIndex = Math.floor(Math.random() * a.length);
-      selectAnime(a[randomIndex]);
+      selectAnime(a[randomIndex], true);
     });
   }
 

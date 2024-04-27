@@ -18,11 +18,11 @@ const (
 )
 
 type AnimeItem struct {
-	Title      string
-	Synopsis   string
-	StartDate  string
-	EndDate    string
-	CoverImage string
+	Title      string `json:"Title"`
+	Synopsis   string `json:"Synopsis"`
+	StartDate  string `json:"StartDate"`
+	EndDate    string `json:"EndDate"`
+	CoverImage string `json:"CoverImage"`
 }
 
 func databaseExists() bool {
