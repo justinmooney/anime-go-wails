@@ -1,4 +1,3 @@
-import { useState, ChangeEvent } from "react";
 import "./App.css";
 import { GetAnimes, DoEvents } from "../wailsjs/go/main/App";
 import { EventsOn, EventsOff, LogInfo } from "../wailsjs/runtime";
@@ -39,31 +38,20 @@ function MainDisplay({ anime }: AnimeProps) {
   );
 }
 
-function LoaderPage() {
-  const [progress, setProgress] = useState(Array(0.0, 0.0));
-
-  function start() {
-    setProgress([0.0, 0.0]);
-    EventsOn("DownloadProgress", (x) => {
-      setProgress(x);
-    });
-    DoEvents();
-  }
-
-  function cancel() {
-    EventsOff("DownloadProgress");
-    setProgress([0.0, 0.0]);
-  }
-
+function LoaderPage(
+  start: () => void,
+  cancel: () => void,
+  progress: Array<number>,
+) {
   function content() {
     if (progress[0] == 0) {
       return <button onClick={start}>get em</button>;
     } else {
       return (
         <div>
-          <button onClick={cancel}>cancel</button>
+          {/* <button onClick={cancel}>cancel</button> */}
           <div>
-            <progress value={progress[0] / 100} />
+            <progress value={progress[0] / progress[1]} />
           </div>
           <div>
             {Math.floor(progress[0])}/{progress[1]}
@@ -74,7 +62,14 @@ function LoaderPage() {
   }
 
   return (
-    <div>
+    <div
+      style={{
+        position: "absolute",
+        left: "50%",
+        top: "40%",
+        transform: "translate(-50%, -50%)",
+      }}
+    >
       <h1>get dem animes</h1>
       {content()}
     </div>
@@ -86,6 +81,22 @@ function App() {
   const [animeList, setAnimeList] = useState(Array());
   const [loaded, setLoaded] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [progress, setProgress] = useState(Array(0.0, 0.0));
+  const [downloading, setDownloading] = useState(false);
+
+  function start() {
+    setProgress([0.0, 0.0]);
+    EventsOn("DownloadProgress", (x) => {
+      setProgress(x);
+    });
+    DoEvents();
+    setDownloading(true);
+  }
+
+  function cancel() {
+    EventsOff("DownloadProgress");
+    setProgress([0.0, 0.0]);
+  }
 
   function animeClicked(a: Anime) {
     setAnime(a);
@@ -107,6 +118,16 @@ function App() {
     });
   }
 
+  function selectAnime(a: Anime) {
+    setAnime(a);
+    const element = document.getElementById(a.Title);
+    if (element != null) {
+      element.scrollIntoView({ behavior: "smooth" });
+      // TODO: highlight the button without focusing it
+      // element.focus();
+    }
+  }
+
   function getAnimes(prefix: string) {
     setSearchTerm(prefix);
     GetAnimes(prefix).then((x: Anime[]) => {
@@ -114,7 +135,7 @@ function App() {
       if (x.length == 0) {
         return;
       }
-      setAnime(x[0]);
+      selectAnime(x[0]);
     });
   }
 
@@ -123,13 +144,7 @@ function App() {
     GetAnimes("").then((a: Anime[]) => {
       setAnimeList(createButtons(a));
       const randomIndex = Math.floor(Math.random() * a.length);
-      setAnime(a[randomIndex]);
-
-      const element = document.getElementById(a[randomIndex].Title);
-      if (element != null) {
-        element.scrollIntoView({ behavior: "smooth" });
-        element.focus();
-      }
+      selectAnime(a[randomIndex]);
     });
   }
 
@@ -138,20 +153,22 @@ function App() {
     getAnimes(v);
   }
 
-  if (true) {
-    return LoaderPage();
+  if (progress[0] === 0 || (downloading && progress[0] < progress[1])) {
+    return LoaderPage(start, cancel, progress);
   }
 
   if (!loaded) {
     getAnimes("");
     setLoaded(true);
   }
+
   return (
     <div id="App">
       <div className="row">
         <div>
           <div className="row">
             <input
+              id="input-box"
               className="searchbox"
               type="text"
               placeholder="search..."
