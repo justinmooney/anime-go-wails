@@ -1,7 +1,7 @@
 import { useState, ChangeEvent } from "react";
 import "./App.css";
 import { GetAnimes, DoEvents } from "../wailsjs/go/main/App";
-import { EventsOn, EventsOff } from "../wailsjs/runtime";
+import { EventsOn, EventsOff, LogInfo } from "../wailsjs/runtime";
 
 type AnimeProps = {
   anime: Anime | null;
@@ -40,37 +40,43 @@ function MainDisplay({ anime }: AnimeProps) {
 }
 
 function LoaderPage() {
-  const [progress, setProgress] = useState(0.0);
+  const [progress, setProgress] = useState(Array(0.0, 0.0));
 
   function start() {
-    setProgress(0.0);
-    EventsOn("MyEvent", (x) => {
+    setProgress([0.0, 0.0]);
+    EventsOn("DownloadProgress", (x) => {
       setProgress(x);
     });
     DoEvents();
   }
 
   function cancel() {
-    EventsOff("MyEvent");
-    setProgress(0.0);
+    EventsOff("DownloadProgress");
+    setProgress([0.0, 0.0]);
   }
 
-  function button() {
-    if (progress == 0) {
+  function content() {
+    if (progress[0] == 0) {
       return <button onClick={start}>get em</button>;
     } else {
-      return <button onClick={cancel}>cancel</button>;
+      return (
+        <div>
+          <button onClick={cancel}>cancel</button>
+          <div>
+            <progress value={progress[0] / 100} />
+          </div>
+          <div>
+            {Math.floor(progress[0])}/{progress[1]}
+          </div>
+        </div>
+      );
     }
   }
 
   return (
     <div>
       <h1>get dem animes</h1>
-      {button()}
-      <div>
-        <progress value={progress / 100} />
-        <div>{Math.floor(progress)}/100</div>
-      </div>
+      {content()}
     </div>
   );
 }
@@ -132,15 +138,14 @@ function App() {
     getAnimes(v);
   }
 
-  if (!loaded) {
-    getAnimes("");
-    setLoaded(true);
-  }
-
   if (true) {
     return LoaderPage();
   }
 
+  if (!loaded) {
+    getAnimes("");
+    setLoaded(true);
+  }
   return (
     <div id="App">
       <div className="row">

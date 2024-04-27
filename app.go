@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
-	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -45,9 +45,14 @@ func (a *App) GetAnimes(prefix string) []AnimeItem {
 }
 
 func (a *App) DoEvents() {
-	x := 0
-	for range time.Tick(1 * time.Second) {
-		runtime.EventsEmit(a.ctx, "MyEvent", x)
-		x += 5
-	}
+	dl := NewDownloader(10)
+	go func() {
+		progress := 0
+		for p := range dl.Progress {
+			progress += p
+			runtime.EventsEmit(a.ctx, "DownloadProgress", []int{progress, dl.TotalPages})
+			runtime.LogInfo(a.ctx, fmt.Sprintf("PROGRESS: %d", progress))
+		}
+	}()
+	dl.Download()
 }

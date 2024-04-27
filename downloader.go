@@ -47,31 +47,23 @@ func (dl *Downloader) Download() {
 	semChan := make(chan int, 64)
 	defer close(semChan)
 
-	urlChan := make(chan string)
-	defer close(urlChan)
-
 	insertChan := NewInserter()
 	defer close(insertChan)
 
 	var wg sync.WaitGroup
 
-	go func() {
-		for next := range urlChan {
-			wg.Add(1)
-			semChan <- 1
-			go func(u string) {
-				batch := doRequest(u)
-				<-semChan
-				insertChan <- batch.Data
-				dl.Progress <- 1
-				wg.Done()
-			}(next)
-		}
-	}()
-
 	page := 0
-	for page <= dl.TotalPages {
-		urlChan <- dl.getPageURL(page * dl.pageSize)
+	for page < dl.TotalPages {
+		wg.Add(1)
+		semChan <- 1
+		next := dl.getPageURL(page * dl.pageSize)
+		go func(u string) {
+			batch := doRequest(u)
+			<-semChan
+			insertChan <- batch.Data
+			dl.Progress <- 1
+			wg.Done()
+		}(next)
 		page += 1
 	}
 
