@@ -1,6 +1,6 @@
 import "./App.css";
 import { useState, ChangeEvent } from "react";
-import { GetAnimes, DoEvents } from "../wailsjs/go/main/App";
+import { GetAnimes, DoEvents, DatabaseExists } from "../wailsjs/go/main/App";
 import { EventsOn, EventsOff } from "../wailsjs/runtime";
 import { main as models } from "../wailsjs/go/models";
 
@@ -77,6 +77,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [progress, setProgress] = useState(Array(0.0, 0.0));
   const [downloading, setDownloading] = useState(false);
+  const [needsInit, setNeedsInit] = useState(true);
 
   function start() {
     setProgress([0.0, 0.0]);
@@ -85,6 +86,7 @@ function App() {
     });
     DoEvents();
     setDownloading(true);
+    setNeedsInit(false);
   }
 
   function cancel() {
@@ -150,7 +152,13 @@ function App() {
     getAnimes(v);
   }
 
-  if (progress[0] === 0 || (downloading && progress[0] < progress[1])) {
+  DatabaseExists().then((x) => setNeedsInit(!x));
+  if (downloading && progress[0] > 0 && progress[0] == progress[1]) {
+    setNeedsInit(false);
+    setDownloading(false);
+  }
+
+  if (needsInit || downloading) {
     return LoaderPage(start, cancel, progress);
   }
 
