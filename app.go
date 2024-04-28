@@ -26,22 +26,41 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
+func (a *App) GetAnime(title string) *AnimeItem {
+	anime := new(AnimeItem)
+	for _, a := range *animes {
+		if a.Title == title {
+			anime = &a
+			break
+		}
+	}
+	return anime
+}
+
 func (a *App) GetAnimes(prefix string) []AnimeItem {
+	var animeList *[]AnimeItem
+
 	if animes == nil {
 		animes = fetchAnimes()
 	}
-	if prefix == "" {
-		return *animes
-	}
 
-	prefix = strings.ToLower(prefix)
-	filtered := make([]AnimeItem, 0)
-	for _, a := range *animes {
-		if strings.HasPrefix(strings.ToLower(a.Title), prefix) {
-			filtered = append(filtered, a)
+	if prefix == "" {
+		animeList = animes
+	} else {
+		prefix = strings.ToLower(prefix)
+		filtered := make([]AnimeItem, 0)
+		for _, a := range *animes {
+			if strings.HasPrefix(strings.ToLower(a.Title), prefix) {
+				filtered = append(filtered, a)
+			}
 		}
+		animeList = &filtered
 	}
-	return filtered
+	titles := make([]AnimeItem, 0)
+	for _, a := range *animeList {
+		titles = append(titles, AnimeItem{Title: a.Title})
+	}
+	return titles
 }
 
 func (a *App) DoEvents() {

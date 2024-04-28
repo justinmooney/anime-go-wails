@@ -10,6 +10,10 @@ export function DoEvents() {
   return window['go']['main']['App']['DoEvents']();
 }
 
+export function GetAnime(arg1) {
+  return window['go']['main']['App']['GetAnime'](arg1);
+}
+
 export function GetAnimes(arg1) {
   return window['go']['main']['App']['GetAnimes'](arg1);
 }

@@ -1,6 +1,11 @@
 import "./App.css";
 import { useState, ChangeEvent } from "react";
-import { GetAnimes, DoEvents, DatabaseExists } from "../wailsjs/go/main/App";
+import {
+  GetAnimes,
+  DoEvents,
+  DatabaseExists,
+  GetAnime,
+} from "../wailsjs/go/main/App";
 import { EventsOn, EventsOff } from "../wailsjs/runtime";
 import { main as models } from "../wailsjs/go/models";
 
@@ -94,8 +99,14 @@ function App() {
     setProgress([0.0, 0.0]);
   }
 
+  function setDisplayedAnime(a: models.AnimeItem) {
+    GetAnime(a.Title).then((x: models.AnimeItem) => {
+      setAnime(x);
+    });
+  }
+
   function animeClicked(a: models.AnimeItem) {
-    setAnime(a);
+    setDisplayedAnime(a);
   }
 
   function createButtons(list: models.AnimeItem[]) {
@@ -115,7 +126,7 @@ function App() {
   }
 
   function selectAnime(a: models.AnimeItem, select: boolean) {
-    setAnime(a);
+    setDisplayedAnime(a);
     if (!select) {
       return;
     }
