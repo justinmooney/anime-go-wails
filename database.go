@@ -25,7 +25,7 @@ type AnimeItem struct {
 	CoverImage string `json:"CoverImage"`
 }
 
-func databaseExists() bool {
+func (a *App) DatabaseExists() bool {
 	_, err := os.Stat(DBFILE)
 	return !errors.Is(err, os.ErrNotExist)
 }
