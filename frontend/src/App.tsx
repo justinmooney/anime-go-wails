@@ -6,7 +6,7 @@ import {
   DatabaseExists,
   GetAnime,
 } from "../wailsjs/go/main/App";
-import { EventsOn, EventsOff } from "../wailsjs/runtime";
+import { EventsOn, EventsOff, LogInfo } from "../wailsjs/runtime";
 import { main as models } from "../wailsjs/go/models";
 
 type AnimeProps = {
@@ -99,38 +99,38 @@ function App() {
     setProgress([0.0, 0.0]);
   }
 
-  function setDisplayedAnime(a: models.AnimeItem) {
-    GetAnime(a.Title).then((x: models.AnimeItem) => {
-      setAnime(x);
+  function setDisplayedAnime(title: string) {
+    GetAnime(title).then((a: models.AnimeItem) => {
+      setAnime(a);
     });
   }
 
-  function animeClicked(a: models.AnimeItem) {
-    setDisplayedAnime(a);
+  function animeClicked(title: string) {
+    setDisplayedAnime(title);
   }
 
-  function createButtons(list: models.AnimeItem[]) {
-    return list.map((a) => {
+  function createButtons(list: string[]) {
+    return list.map((title) => {
       return (
         <div>
           <button
-            id={a.Title}
+            id={title}
             className="list-item"
-            onClick={() => animeClicked(a)}
+            onClick={() => animeClicked(title)}
           >
-            {a.Title}
+            {title}
           </button>
         </div>
       );
     });
   }
 
-  function selectAnime(a: models.AnimeItem, select: boolean) {
-    setDisplayedAnime(a);
+  function selectAnime(title: string, select: boolean) {
+    setDisplayedAnime(title);
     if (!select) {
       return;
     }
-    const element = document.getElementById(a.Title);
+    const element = document.getElementById(title);
     if (element != null) {
       element.scrollIntoView({ behavior: "smooth" });
       // TODO: highlight the button without focusing it
@@ -140,21 +140,20 @@ function App() {
 
   function getAnimes(prefix: string) {
     setSearchTerm(prefix);
-    GetAnimes(prefix).then((x: models.AnimeItem[]) => {
-      setAnimeList(createButtons(x));
-      if (x.length == 0) {
+    GetAnimes(prefix).then((titles: string[]) => {
+      setAnimeList(createButtons(titles));
+      if (titles.length == 0) {
         return;
       }
-      selectAnime(x[0], false);
     });
   }
 
   function getRandomAnime() {
     setSearchTerm("");
-    GetAnimes("").then((a: models.AnimeItem[]) => {
-      setAnimeList(createButtons(a));
-      const randomIndex = Math.floor(Math.random() * a.length);
-      selectAnime(a[randomIndex], true);
+    GetAnimes("").then((titles: string[]) => {
+      setAnimeList(createButtons(titles));
+      const randomIndex = Math.floor(Math.random() * titles.length);
+      selectAnime(titles[randomIndex], true);
     });
   }
 
@@ -163,7 +162,13 @@ function App() {
     getAnimes(v);
   }
 
-  DatabaseExists().then((x) => setNeedsInit(!x));
+  if (needsInit) {
+    DatabaseExists().then((x) => {
+      setNeedsInit(!x);
+      LogInfo("NEED TO INIT");
+    });
+  }
+
   if (downloading && progress[0] > 0 && progress[0] == progress[1]) {
     setNeedsInit(false);
     setDownloading(false);
@@ -174,7 +179,7 @@ function App() {
   }
 
   if (!loaded) {
-    getAnimes("");
+    getRandomAnime();
     setLoaded(true);
   }
 

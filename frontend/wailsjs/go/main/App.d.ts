@@ -8,4 +8,4 @@ export function DoEvents():Promise<void>;
 
 export function GetAnime(arg1:string):Promise<main.AnimeItem>;
 
-export function GetAnimes(arg1:string):Promise<Array<main.AnimeItem>>;
+export function GetAnimes(arg1:string):Promise<Array<string>>;

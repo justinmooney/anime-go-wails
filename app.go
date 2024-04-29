@@ -37,29 +37,26 @@ func (a *App) GetAnime(title string) *AnimeItem {
 	return anime
 }
 
-func (a *App) GetAnimes(prefix string) []AnimeItem {
-	var animeList *[]AnimeItem
-
+func (a *App) GetAnimes(prefix string) []string {
 	if animes == nil {
 		animes = fetchAnimes()
 	}
 
-	if prefix == "" {
-		animeList = animes
-	} else {
-		prefix = strings.ToLower(prefix)
-		filtered := make([]AnimeItem, 0)
+	titles := make([]string, 0)
+	filterPrefix := strings.ToLower(prefix)
+
+	if filterPrefix != "" {
 		for _, a := range *animes {
 			if strings.HasPrefix(strings.ToLower(a.Title), prefix) {
-				filtered = append(filtered, a)
+				titles = append(titles, a.Title)
 			}
 		}
-		animeList = &filtered
+	} else {
+		for _, a := range *animes {
+			titles = append(titles, a.Title)
+		}
 	}
-	titles := make([]AnimeItem, 0)
-	for _, a := range *animeList {
-		titles = append(titles, AnimeItem{Title: a.Title})
-	}
+
 	return titles
 }
 
