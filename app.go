@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -56,6 +57,8 @@ func (a *App) GetAnimes(prefix string) []string {
 			titles = append(titles, a.Title)
 		}
 	}
+
+	slices.Sort(titles)
 
 	return titles
 }

@@ -29,7 +29,7 @@ func (dl *Downloader) initialize() int {
 	// params, _ := url.ParseQuery(lastURL.RawQuery)
 	// total, _ := strconv.Atoi(params["page[offset]"][0])
 
-	total := 100 // for testing
+	total := 1000 // for testing
 	return total
 }
 
@@ -47,7 +47,7 @@ func (dl *Downloader) Download() {
 	semChan := make(chan int, 64)
 	defer close(semChan)
 
-	insertChan := NewInserter()
+	insertChan := NewDBFile()
 	defer close(insertChan)
 
 	var wg sync.WaitGroup

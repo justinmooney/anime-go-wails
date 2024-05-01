@@ -1,20 +1,15 @@
 package main
 
 import (
-	"context"
-	"database/sql"
+	"bufio"
+	"compress/gzip"
+	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
-	"strconv"
-
-	"github.com/marcboeker/go-duckdb"
-	// _ "github.com/marcboeker/go-duckdb"
 )
 
 const (
-	DBFILE = "./anime.db"
-	TABLE  = "animes"
+	DBFILE = "./anime.gz"
 )
 
 type AnimeItem struct {
@@ -30,110 +25,49 @@ func (a *App) DatabaseExists() bool {
 	return !errors.Is(err, os.ErrNotExist)
 }
 
-func createDatabase() {
-	db, err := sql.Open("duckdb", DBFILE)
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = db.Exec(`
-        CREATE TABLE animes (
-            id UBIGINT, 
-            title VARCHAR,
-            synopsis VARCHAR,
-            start_date VARCHAR,
-            end_date VARCHAR,
-            cover_image VARCHAR
-        )
-    `)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func NewInserter() chan []AnimeRecord {
-	createDatabase()
-
-	connector, err := duckdb.NewConnector(DBFILE, nil)
-	if err != nil {
-		panic(err)
-	}
-	defer connector.Close()
-
-	conn, err := connector.Connect(context.Background())
-	if err != nil {
-		panic(err)
-	}
-
-	appender, err := duckdb.NewAppenderFromConn(conn, "", TABLE)
-	if err != nil {
-		panic(err)
-	}
-
+func NewDBFile() chan []AnimeRecord {
 	ch := make(chan []AnimeRecord)
 
 	go func() {
-		defer appender.Close()
+		f, _ := os.Create(DBFILE)
+		w := gzip.NewWriter(f)
+		enc := json.NewEncoder(w)
+		defer w.Close()
+
 		for batch := range ch {
-			insertBatch(appender, &batch)
+			for _, row := range batch {
+				enc.Encode(row)
+			}
 		}
 	}()
 
 	return ch
 }
 
-func insertBatch(appender *duckdb.Appender, batch *[]AnimeRecord) {
-	for _, row := range *batch {
-		id, _ := strconv.ParseUint(row.Id, 10, 64)
-		attrs := row.Attributes
-		err := appender.AppendRow(
-			id,
-			attrs.CanonicalTitle,
-			attrs.Synopsis,
-			attrs.StartDate,
-			attrs.EndDate,
-			attrs.CoverImage.Original,
-		)
-		if err != nil {
-			panic(err)
-		}
-	}
-	appender.Flush()
-}
-
 func fetchAnimes() *[]AnimeItem {
 	animes := make([]AnimeItem, 0)
 
-	db, err := sql.Open("duckdb", DBFILE)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
-	sql := `
-    SELECT title, synopsis, start_date, end_date, cover_image
-    FROM %s
-    ORDER BY title
-    `
-
-	rows, err := db.Query(fmt.Sprintf(sql, TABLE))
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		anime := new(AnimeItem)
-		if err := rows.Scan(
-			&anime.Title,
-			&anime.Synopsis,
-			&anime.StartDate,
-			&anime.EndDate,
-			&anime.CoverImage,
-		); err != nil {
+	f, _ := os.Open(DBFILE)
+	reader, _ := gzip.NewReader(f)
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		data := new(AnimeRecord)
+		if err := json.Unmarshal(scanner.Bytes(), &data); err != nil {
 			panic(err)
 		}
-		animes = append(animes, *anime)
+
+		anime := AnimeItem{
+			Title:      data.Attributes.CanonicalTitle,
+			Synopsis:   data.Attributes.Synopsis,
+			StartDate:  data.Attributes.StartDate,
+			EndDate:    data.Attributes.EndDate,
+			CoverImage: data.Attributes.CoverImage.Original,
+		}
+
+		animes = append(animes, anime)
+	}
+	if err := scanner.Err(); err != nil {
+		panic(err)
 	}
 
 	return &animes

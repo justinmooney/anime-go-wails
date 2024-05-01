@@ -1,5 +1,4 @@
 build
 node_modules
 frontend/dist
-*.db
-*.db.wal
+*.gz
