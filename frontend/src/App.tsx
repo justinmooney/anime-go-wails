@@ -1,4 +1,7 @@
 import "./App.css";
+import MainDisplay from "./MainDisplay";
+import LoadingPage from "./LoadingPage";
+import ListItem from "./ListItem";
 import { useState, ChangeEvent } from "react";
 import {
   GetAnimes,
@@ -8,72 +11,6 @@ import {
 } from "../wailsjs/go/main/App";
 import { EventsOn, EventsOff, LogInfo } from "../wailsjs/runtime";
 import { main as models } from "../wailsjs/go/models";
-
-type AnimeProps = {
-  anime: models.AnimeItem | null;
-};
-
-function MainDisplay({ anime }: AnimeProps) {
-  if (anime === null) {
-    return <div></div>;
-  }
-
-  let startYear: string = anime.StartDate.slice(0, 4);
-  let endYear: string = anime.EndDate.slice(0, 4);
-  let dateString: string = `${startYear} - ${endYear}`;
-  if (startYear === endYear) {
-    dateString = startYear;
-  }
-
-  return (
-    <div>
-      <h1 className="title">
-        {anime.Title} ({dateString})
-      </h1>
-      <hr />
-      <p className="synopsis">{anime.Synopsis}</p>
-      <img src={anime.CoverImage} height={anime.CoverImage ? "500" : "0"} />
-    </div>
-  );
-}
-
-function LoaderPage(
-  start: () => void,
-  cancel: () => void,
-  progress: Array<number>,
-) {
-  function content() {
-    if (progress[0] == 0) {
-      return <button onClick={start}>get em</button>;
-    } else {
-      return (
-        <div>
-          {/* <button onClick={cancel}>cancel</button> */}
-          <div>
-            <progress value={progress[0] / progress[1]} />
-          </div>
-          <div>
-            {Math.floor(progress[0])}/{progress[1]}
-          </div>
-        </div>
-      );
-    }
-  }
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: "50%",
-        top: "40%",
-        transform: "translate(-50%, -50%)",
-      }}
-    >
-      <h1>get dem animes</h1>
-      {content()}
-    </div>
-  );
-}
 
 function App() {
   const [anime, setAnime] = useState<models.AnimeItem | null>(null);
@@ -111,17 +48,7 @@ function App() {
 
   function createButtons(list: string[]) {
     return list.map((title) => {
-      return (
-        <div>
-          <button
-            id={title}
-            className="list-item"
-            onClick={() => animeClicked(title)}
-          >
-            {title}
-          </button>
-        </div>
-      );
+      return <ListItem title={title} onClick={() => animeClicked(title)} />;
     });
   }
 
@@ -175,7 +102,7 @@ function App() {
   }
 
   if (needsInit || downloading) {
-    return LoaderPage(start, cancel, progress);
+    return LoadingPage(start, cancel, progress);
   }
 
   if (!loaded) {
